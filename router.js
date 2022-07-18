@@ -13,9 +13,30 @@ let date = date_ob.getDate();
 let month = date_ob.getMonth() + 1;
 let year = date_ob.getFullYear();
 
+
 //get todo list
 router.get('/', (req, res)=>{
-    res.send(data);
+    var all_title = [];
+    for (const key in data) {
+        all_title.push(data[key]['title'])
+    }
+    res.send(all_title);
+})
+
+//filter todo
+router.get('/q',(req,res)=>{
+    var result = data
+    var query = req.query;
+    for (const key in query) {
+        var result = result.filter(i => String(i[key])==query[key])
+    }
+    if(result.length > 0){
+        res.send(result)
+    }else{
+        res.send('No data found....please try after sometime!!!')
+    }
+    
+   
 })
 
 
@@ -34,9 +55,9 @@ router.get('/:id', (req, res)=>{
 //add new todo
 router.post('/',(req, res)=>{
     var item = req.body;
-    item["id"] = Object.keys(data).length + 1
+    item["id"] = Math.floor(Math. random() * 10000)
     item["date"] = date + "-" + month + "-" + year
-    item["ischecked?"] = false
+    item["ischecked"] = false
     data.push(item);
     fs.writeFile('todo.json',JSON.stringify(data),(err)=>{
         if (err) res.send(err);
@@ -60,7 +81,7 @@ router.put('/:id',(req,res)=>{
             data[index]['desc'] = desc
         }
         if(ischecked){
-            data[index]['ischecked?'] = ischecked
+            data[index]['ischecked'] = (ischecked == "true")?true:false
         }
         data[index]['date'] = date + "-" + month + "-" + year
         fs.writeFile('todo.json',JSON.stringify(data),(err)=>{
@@ -73,13 +94,12 @@ router.put('/:id',(req,res)=>{
 //delete todo 
 router.delete('/:id',(req,res)=>{
     var {id} = req.params;
-    console.log(id)
     var index = data.findIndex((item)=>{
         return item.id === parseInt(id)
     })
     
     if (index == -1){
-        res.send('No item found!!!')
+        res.send('No data found!!!')
     }else{
         data.splice(index,1)
         fs.writeFile('todo.json',JSON.stringify(data),(err)=>{

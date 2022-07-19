@@ -1,0 +1,14 @@
+version: "3.3"
+
+services:
+  todo-api:
+    build: . # The path to root, Dockerfile will be detected
+    volumes:
+      # Allows changes made to project directory to be accessed by the container and persist 
+      - .:/app
+      # A volume dedicated to node modules.
+      - /app/node_modules
+    container_name: todo-api # container name
+    ports:
+      - 3000:3000 # map 3000 localhost to 3000 of docker host
+    command: ["npm", "start"] # nodemon index.js

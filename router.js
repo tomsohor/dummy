@@ -5,11 +5,6 @@ const router = express.Router();
 const db = require('./db')
 
 
-//fs to access file system
-// const fs = require('fs');
-// var rawdata = fs.readFileSync('todo.json');
-// var data = JSON.parse(rawdata);
-
 //Get Current Date 
 let date_ob = new Date();
 let date = date_ob.getDate();
@@ -18,24 +13,19 @@ let year = date_ob.getFullYear();
 
 
 //get todo list
-router.get('/', (req, res)=>{
-   db.query('SELECT * from todos').then(r=>res.send(r.rows)).catch(e=>console.log(e));  
+router.get('/', async(req, res)=>{
+    const query = req.query;
+    var items = await db.query('SELECT * from todos').then(r=>r.rows).catch(e=>console.log(e));
+    if (Object.keys(req.query).length === 0){
+        res.send(items)
+    }else{
+        for (const key in query) {
+        // convert to String to check with query since query is type string
+          var items = items.filter(i=>String(i[key])==query[key])  
+        }
+        res.send(items)
+    }  
 })
-
-//filter todo
-// router.get('/',async(req,res)=>{
-//     var query = req.query;
-//     for (const key in query) {
-//         var result = result.filter(i => String(i[key])==query[key])
-//     }
-//     if(result.length > 0){
-//         res.send(result)
-//     }else{
-//         res.send('No data found....please try after sometime!!!')
-//     }
-    
-   
-// })
 
 
 //get todo details
@@ -49,6 +39,7 @@ router.get('/:id', async(req, res)=>{
     }
    
 })
+
 
 //add new todo
 router.post('/',async(req, res)=>{
@@ -65,6 +56,7 @@ router.post('/',async(req, res)=>{
        
 })
 
+
 //update todo
 router.put('/:id',async(req,res)=>{
     var {id} = req.params;
@@ -79,12 +71,13 @@ router.put('/:id',async(req,res)=>{
         }
         if(desc){
             await db.query(`UPDATE todos SET description = '${desc}' WHERE id = '${id}'`)
+        }
         if(ischecked){
             await db.query(`UPDATE todos SET ischecked = '${ischecked}' WHERE id = '${id}'`)
         }
         await db.query(`UPDATE todos SET date = '${todayDate}' WHERE id = '${id}'`)
         res.send('Item Updated....')
-    }
+    
 }})
 
 //delete todo 

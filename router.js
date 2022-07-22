@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
+//import db
+const db = require('./db')
+
 
 //fs to access file system
-const fs = require('fs');
-var rawdata = fs.readFileSync('todo.json');
-var data = JSON.parse(rawdata);
+// const fs = require('fs');
+// var rawdata = fs.readFileSync('todo.json');
+// var data = JSON.parse(rawdata);
 
 //Get Current Date 
 let date_ob = new Date();
@@ -16,96 +19,83 @@ let year = date_ob.getFullYear();
 
 //get todo list
 router.get('/', (req, res)=>{
-    var all_title = [];
-    for (const key in data) {
-        all_title.push(data[key]['title'])
-    }
-    res.send(all_title);
+   db.query('SELECT * from todos').then(r=>res.send(r.rows)).catch(e=>console.log(e));  
 })
 
 //filter todo
-router.get('/q',(req,res)=>{
-    var result = data
-    var query = req.query;
-    for (const key in query) {
-        var result = result.filter(i => String(i[key])==query[key])
-    }
-    if(result.length > 0){
-        res.send(result)
-    }else{
-        res.send('No data found....please try after sometime!!!')
-    }
+// router.get('/',async(req,res)=>{
+//     var query = req.query;
+//     for (const key in query) {
+//         var result = result.filter(i => String(i[key])==query[key])
+//     }
+//     if(result.length > 0){
+//         res.send(result)
+//     }else{
+//         res.send('No data found....please try after sometime!!!')
+//     }
     
    
-})
+// })
 
 
 //get todo details
-router.get('/:id', (req, res)=>{
+router.get('/:id', async(req, res)=>{
     var {id} = req.params;
-    var item = data.find(item => item.id == parseInt(id))
-    if (item == undefined){
-        res.send('Item not found......');
+    const item = await db.query(`SELECT * FROM todos WHERE id = ${id}`).then(r=>r.rows).catch(e=>console.log(e));
+    if(item == 0){
+        res.send('No Item Found .....')
     }else{
         res.send(item)
     }
-    
+   
 })
 
 //add new todo
-router.post('/',(req, res)=>{
-    var item = req.body;
-    item["id"] = Math.floor(Math. random() * 10000)
-    item["date"] = date + "-" + month + "-" + year
-    item["ischecked"] = false
-    data.push(item);
-    fs.writeFile('todo.json',JSON.stringify(data),(err)=>{
-        if (err) res.send(err);
-        res.send('Item Added...')
-    })
+router.post('/',async(req, res)=>{
+    try {
+        const {title,desc} = req.body;
+        const id = Math.floor(Math. random() * 10000)
+        const todayDate =year+ "-" + month + "-"+ date 
+        const ischecked = false
+        await db.query(`INSERT INTO todos(id, title, description, date, ischecked) VALUES('${id}', '${title}', '${desc}', '${todayDate}', '${ischecked}')`);
+        res.send("Item added....")
+    } catch (error) {
+        console.log(error)
+    }
+       
 })
 
 //update todo
-router.put('/:id',(req,res)=>{
+router.put('/:id',async(req,res)=>{
     var {id} = req.params;
     var {title,desc,ischecked} = req.body;
-    console.log(id)
-    var index = data.findIndex(i=>i.id == id)
-    if (index == -1){
-        res.send('Unexisting Item....')
+    var todayDate = year+ "-" + month + "-"+ date 
+    const item = await db.query(`SELECT * FROM todos WHERE id = ${id}`).then(r => r.rows)
+    if (item == 0){
+        res.send('No Item found')
     }else{
         if(title){
-            data[index]['title'] = title
+            await db.query(`UPDATE todos SET title = '${title}' WHERE id = '${id}'`)
         }
         if(desc){
-            data[index]['desc'] = desc
-        }
+            await db.query(`UPDATE todos SET description = '${desc}' WHERE id = '${id}'`)
         if(ischecked){
-            data[index]['ischecked'] = (ischecked == "true")?true:false
+            await db.query(`UPDATE todos SET ischecked = '${ischecked}' WHERE id = '${id}'`)
         }
-        data[index]['date'] = date + "-" + month + "-" + year
-        fs.writeFile('todo.json',JSON.stringify(data),(err)=>{
-            if (err) res.send(err);
-            res.send('Item Updated....')
-        })
+        await db.query(`UPDATE todos SET date = '${todayDate}' WHERE id = '${id}'`)
+        res.send('Item Updated....')
     }
-})
+}})
 
 //delete todo 
-router.delete('/:id',(req,res)=>{
+router.delete('/:id',async(req,res)=>{
     var {id} = req.params;
-    var index = data.findIndex((item)=>{
-        return item.id === parseInt(id)
-    })
-    
-    if (index == -1){
-        res.send('No data found!!!')
+    const item = await db.query(`SELECT * FROM todos WHERE id = ${id}`).then(r => r.rows)
+    if (item == 0){
+        res.send('No Item found....')
     }else{
-        data.splice(index,1)
-        fs.writeFile('todo.json',JSON.stringify(data),(err)=>{
-            if (err) res.send(err);
-            res.send('Item Deleted...')
-        })
+        await db.query(`DELETE FROM todos WHERE id = '${id}'`)
+        res.send('Item Deleted....')
     }
     
 })

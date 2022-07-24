@@ -8,7 +8,6 @@ services:
       - 3000:3000
     depends_on:
       - db
-    command: ["npm","start"]
     volumes:
       - ./:/app
       - /app/node_modules

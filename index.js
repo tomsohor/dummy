@@ -12,8 +12,11 @@ db.authenticate()
    .catch(err => console.log(err));
 
 
-const router = require('./router/router');
-app.use('/',router);
+const todos = require('./router/todos');
+const users = require('./router/users');
+
+app.use('/todo',todos);
+app.use('/user',users);
 
 app.listen(port,() => {
   console.log(`Example app listening on port ${port}`)

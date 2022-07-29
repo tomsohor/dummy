@@ -1,10 +1,11 @@
 const {DataTypes } = require('sequelize');
 const db = require('./db')
+const User = require('./users')
 
-const Todos = db.define('todo',{
+const Todos = db.define('todos',{
     id:{
-        type:DataTypes.INTEGER,
-        allowNull:false,
+        type:DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey:true
     },
     title:{
@@ -15,19 +16,27 @@ const Todos = db.define('todo',{
         type:DataTypes.STRING,
         allowNull:false
     },
-    date:{
-        type:DataTypes.DATE,
-        allowNull:false
-    },
+    
     ischecked:{
         type:DataTypes.BOOLEAN,
         allowNull:false
     }
 },{
     freezeTableName:true,
-    timestamps:false
 })
 
-Todos.sync();
+
+
+User.hasMany(Todos,{
+    foreignKey:{
+        type:DataTypes.UUID,
+        allowNull: false
+    }
+});
+
+
+Todos.belongsTo(User);
+
+Todos.sync({alter:true});
 
 module.exports = Todos;

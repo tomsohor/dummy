@@ -3,19 +3,14 @@ const router = express.Router();
 
 //import db
 const db = require('../db/db');
-const todos = require('../db/model');
+const todos = require('../db/todos');
+const users = require('../db/users');
 
-
-//Get Current Date 
-let date_ob = new Date();
-let date = date_ob.getDate();
-let month = date_ob.getMonth() + 1;
-let year = date_ob.getFullYear();
 
 
 //get todo list
 router.get('/', async(req, res)=>{
-    const query = req.query
+    const query = req.query;
     if (Object.keys(query).length === 0){
         todos.findAll()
           .then(todos=>res.send(todos))
@@ -32,16 +27,19 @@ router.get('/', async(req, res)=>{
 
 //add new todo
 router.post('/',async(req, res)=>{
+    const user = await users.findOne({where:{username:'kanya'}})
+    console.log(user)
+
     const todo = {
-        id:Math.floor(Math. random() * 10000),
+        userId:user.id,
         title:req.body.title,
         description:req.body.desc,
-        date: year+ "-" + month + "-"+ date,
         ischecked: false,
     }
     await todos.create(todo)
       .then(()=> res.send('todo added...'))
       .catch(err=>console.log(err))
+  
        
 })
 
@@ -51,13 +49,12 @@ router.put('/:id',async(req,res)=>{
     var id = req.params;
     var item = req.body;
     if (Object.keys(item).length !== 0){
-        item['date'] = year+ "-" + month + "-"+ date
         todos.update(item,{where:id})
           .then(()=> res.send('update successfully'))
           .catch(err=>console.log(err));
     }else{
         todos.update(item,{where:id})
-          .then(()=> res.send('update successfully'))
+          .then(()=> res.send('Nothing is updated.....'))
           .catch(err=>console.log(err));
     }
 })
